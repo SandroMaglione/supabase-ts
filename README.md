@@ -7,7 +7,6 @@
   <img src="https://img.shields.io/github/repo-size/SandroMaglione/supabase-ts" />
   <img src="https://img.shields.io/github/license/SandroMaglione/supabase-ts?logo=github" />
   <img src="https://img.shields.io/github/contributors-anon/SandroMaglione/supabase-ts" />
-  <img src="https://img.shields.io/pub/v/supabase-ts?include_prereleases" />
   <a href="https://github.com/SandroMaglione">
     <img alt="GitHub: SandroMaglione" src="https://img.shields.io/github/followers/SandroMaglione?label=Follow&style=social" target="_blank" />
   </a>

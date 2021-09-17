@@ -2,6 +2,7 @@
   "name": "supabase-ts",
   "version": "0.1.0",
   "description": "Supabase with functional programming based on fp-ts",
+  "repository": "https://github.com/SandroMaglione/supabase-ts",
   "main": "./dist/index",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
