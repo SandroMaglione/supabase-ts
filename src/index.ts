@@ -6,8 +6,9 @@ import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
 import { SupabaseQueryBuilder } from "@supabase/supabase-js/dist/main/lib/SupabaseQueryBuilder";
 import { pipe } from "fp-ts/lib/function";
 import { map } from "fp-ts/lib/Array";
-import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { Errors, Mixed, TypeOf } from "io-ts";
+import { PostgrestError } from "@supabase/postgrest-js/src/lib/types";
+import SupabaseClient from "@supabase/supabase-js/dist/main/SupabaseClient";
 
 interface OnErrorRequest<ErrorType> {
   onNoDataError: () => ErrorType;
