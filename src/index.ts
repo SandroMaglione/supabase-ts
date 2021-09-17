@@ -1,14 +1,14 @@
-import * as O from "fp-ts/Option";
-import * as TE from "fp-ts/TaskEither";
-import * as E from "fp-ts/Either";
-import * as ROA from "fp-ts/ReadonlyArray";
+import { fold } from "fp-ts/Option";
+import { TaskEither, left as TEleft, of, chain } from "fp-ts/TaskEither";
+import { Either, left as Eleft, sequenceArray, mapLeft } from "fp-ts/Either";
+import { head as ROAhead } from "fp-ts/ReadonlyArray";
+import SupabaseClient from "@supabase/supabase-js/dist/main/SupabaseClient";
 import { PostgrestFilterBuilder } from "@supabase/postgrest-js";
 import { SupabaseQueryBuilder } from "@supabase/supabase-js/dist/main/lib/SupabaseQueryBuilder";
 import { pipe } from "fp-ts/lib/function";
 import { map } from "fp-ts/lib/Array";
 import { Errors, Mixed, TypeOf } from "io-ts";
 import { PostgrestError } from "@supabase/postgrest-js/src/lib/types";
-import SupabaseClient from "@supabase/supabase-js/dist/main/SupabaseClient";
 
 interface OnErrorRequest<ErrorType> {
   onNoDataError: () => ErrorType;
@@ -27,18 +27,18 @@ const _supabaseRequestWithValidation = <ValidationType extends Mixed>(
         onRequestError,
         onValidationError,
       }: OnErrorRequest<ErrorType>
-    ): TE.TaskEither<ErrorType, readonly ReturnType[]> =>
-    async (): Promise<E.Either<ErrorType, readonly ReturnType[]>> =>
+    ): TaskEither<ErrorType, readonly ReturnType[]> =>
+    async (): Promise<Either<ErrorType, readonly ReturnType[]>> =>
       pipe(
         await query,
-        ({ error, data }): E.Either<ErrorType, readonly ReturnType[]> =>
+        ({ error, data }): Either<ErrorType, readonly ReturnType[]> =>
           error !== null
-            ? E.left(onRequestError(error))
+            ? Eleft(onRequestError(error))
             : data === null
-            ? E.left(onNoDataError())
+            ? Eleft(onNoDataError())
             : pipe(
-                E.sequenceArray(pipe(data, map(validation.decode))),
-                E.mapLeft(onValidationError)
+                sequenceArray(pipe(data, map(validation.decode))),
+                mapLeft(onValidationError)
               )
       );
 };
@@ -53,7 +53,7 @@ export const supabaseRequestListWithValidation = <ValidationType extends Mixed>(
   onError: OnErrorRequest<ErrorType>
 ) => (
   source: SupabaseClient
-) => TE.TaskEither<ErrorType, readonly TypeOf<ValidationType>[]>) => {
+) => TaskEither<ErrorType, readonly TypeOf<ValidationType>[]>) => {
   type ReturnType = TypeOf<typeof validation>;
   return <SupabaseTable extends string, ErrorType = unknown>(
       table: SupabaseTable,
@@ -62,7 +62,7 @@ export const supabaseRequestListWithValidation = <ValidationType extends Mixed>(
       ) => PostgrestFilterBuilder<ReturnType>,
       onError: OnErrorRequest<ErrorType>
     ) =>
-    (source: SupabaseClient): TE.TaskEither<ErrorType, readonly ReturnType[]> =>
+    (source: SupabaseClient): TaskEither<ErrorType, readonly ReturnType[]> =>
       _supabaseRequestWithValidation<ReturnType>(validation)<ErrorType>(
         execute(source.from<ReturnType>(table)),
         onError
@@ -84,7 +84,7 @@ export const supabaseRequestSingleWithValidation = <
   }: OnErrorRequest<ErrorType> & { onZeroData: () => ErrorType }
 ) => (
   source: SupabaseClient
-) => TE.TaskEither<ErrorType, TypeOf<ValidationType>>) => {
+) => TaskEither<ErrorType, TypeOf<ValidationType>>) => {
   type ReturnType = TypeOf<typeof validation>;
   return <SupabaseTable extends string, ErrorType = unknown>(
       table: SupabaseTable,
@@ -98,19 +98,19 @@ export const supabaseRequestSingleWithValidation = <
         onZeroData: () => ErrorType;
       }
     ) =>
-    (source: SupabaseClient): TE.TaskEither<ErrorType, ReturnType> =>
+    (source: SupabaseClient): TaskEither<ErrorType, ReturnType> =>
       pipe(
         _supabaseRequestWithValidation<ReturnType>(validation)<ErrorType>(
           execute(source.from<ReturnType>(table)).limit(1),
           onError
         ),
-        TE.chain((dataList) =>
+        chain((dataList) =>
           pipe(
             dataList,
-            ROA.head,
-            O.fold(
-              (): TE.TaskEither<ErrorType, ReturnType> => TE.left(onZeroData()),
-              (data) => TE.of(data)
+            ROAhead,
+            fold(
+              (): TaskEither<ErrorType, ReturnType> => TEleft(onZeroData()),
+              (data) => of(data)
             )
           )
         )
