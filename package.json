@@ -1,44 +1,65 @@
 {
-  "name": "supabase-ts",
-  "version": "0.1.1",
-  "description": "Supabase with functional programming based on fp-ts",
-  "repository": "https://github.com/SandroMaglione/supabase-ts",
-  "main": "./dist/index",
-  "size-limit": [
-    {
-      "limit": "3 kB",
-      "path": "./dist/index.js"
-    }
-  ],
-  "scripts": {
-    "size": "size-limit",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint . --ext .ts",
-    "build": "tsc -p ."
-  },
+  "version": "0.1.3",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "files": [
     "dist",
-    "LICENSE",
-    "README.md"
+    "src"
   ],
   "keywords": [
     "fp-ts",
     "supabase",
     "functional-programming"
   ],
-  "author": "Sandro Maglione",
-  "license": "MIT",
-  "peerDependencies": {
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
+  },
+  "peerDependencies": {},
+  "dependencies": {
     "@supabase/supabase-js": "^1.22.5",
     "fp-ts": "^2.11.1",
     "io-ts": "^2.2.16"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "name": "supabase-ts",
+  "author": "Sandro Maglione",
+  "module": "dist/src.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/src.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/src.esm.js",
+      "limit": "10 KB"
+    }
+  ],
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^5.0.3",
-    "@typescript-eslint/eslint-plugin": "^4.31.1",
-    "@typescript-eslint/parser": "^4.31.1",
-    "eslint": "^7.32.0",
-    "size-limit": "^5.0.3",
+    "@size-limit/preset-small-lib": "^5.0.4",
+    "husky": "^7.0.2",
+    "size-limit": "^5.0.4",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.3.1",
     "typescript": "^4.4.3"
   }
 }
