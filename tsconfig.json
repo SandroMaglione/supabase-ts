@@ -1,10 +1,12 @@
 {
   "include": ["src"],
+  "exclude": [],
   "compilerOptions": {
+    "declarationDir": ".",
+    "declaration": true,
     "module": "esnext",
     "lib": ["dom", "esnext"],
     "importHelpers": true,
-    "declaration": true,
     "sourceMap": true,
     "rootDir": "./src",
     "strict": true,

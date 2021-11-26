@@ -23,7 +23,7 @@
     "functional-programming"
   ],
   "scripts": {
-    "build": "tsdx build"
+    "build": "rollup -c"
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^1.28.2",
@@ -37,7 +37,10 @@
     "trailingComma": "es5"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-typescript": "^8.3.0",
     "rollup": "^2.60.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
     "typescript": "^4.4.5"
   }
 }
