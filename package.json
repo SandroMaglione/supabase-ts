@@ -26,8 +26,8 @@
     "build": "tsdx build"
   },
   "peerDependencies": {
-    "@supabase/supabase-js": "^1.22.5",
-    "fp-ts": "^2.11.1",
+    "@supabase/supabase-js": "^1.28.2",
+    "fp-ts": "^2.11.5",
     "io-ts": "^2.2.16"
   },
   "prettier": {
