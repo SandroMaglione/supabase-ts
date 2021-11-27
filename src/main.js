@@ -71,6 +71,9 @@ var SupabaseClientIO = /** @class */ (function () {
 /**
  * Builds an instance of `SupabaseClientIO` from a `SupabaseClient`.
  *
+ * - `SupabaseTable`: specify tables/views names allowed
+ * - `ClientErrorType`: default error type
+ *
  * @param supabaseClient Reference to a `SupabaseClient`
  * @returns Instance of `SupabaseClientIO` used to perform validated requests
  */
