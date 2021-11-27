@@ -2,117 +2,144 @@ import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { PostgrestError } from '@supabase/postgrest-js/src/lib/types';
 import { SupabaseQueryBuilder } from '@supabase/supabase-js/dist/main/lib/SupabaseQueryBuilder';
 import SupabaseClient from '@supabase/supabase-js/dist/main/SupabaseClient';
-import { Either, left as Eleft, mapLeft, sequenceArray } from 'fp-ts/Either';
+import * as E from 'fp-ts/Either';
 import { map } from 'fp-ts/lib/Array';
 import { pipe } from 'fp-ts/lib/function';
-import { fold } from 'fp-ts/Option';
-import { head as ROAhead } from 'fp-ts/ReadonlyArray';
-import { chain, left as TEleft, of, TaskEither } from 'fp-ts/TaskEither';
-import { Errors, Mixed, TypeOf } from 'io-ts';
+import * as O from 'fp-ts/Option';
+import * as ROA from 'fp-ts/ReadonlyArray';
+import * as TE from 'fp-ts/TaskEither';
+import { TaskEither } from 'fp-ts/TaskEither';
+import * as t from 'io-ts';
 
-interface OnErrorRequest<ErrorType> {
+/** All possible errors when peforming a request using `requestListWithValidation` from `supabase-ts`. */
+export type OnErrorListRequest<ErrorType = unknown> = {
   onNoDataError: () => ErrorType;
   onRequestError: (error: PostgrestError) => ErrorType;
-  onValidationError: (errors: Errors) => ErrorType;
-}
-
-const _supabaseRequestWithValidation = <ValidationType extends Mixed>(
-  validation: ValidationType
-) => {
-  type ReturnType = TypeOf<typeof validation>;
-  return <ErrorType = unknown>(
-      query: PostgrestFilterBuilder<ReturnType>,
-      {
-        onNoDataError,
-        onRequestError,
-        onValidationError,
-      }: OnErrorRequest<ErrorType>
-    ): TaskEither<ErrorType, readonly ReturnType[]> =>
-    async (): Promise<Either<ErrorType, readonly ReturnType[]>> =>
-      pipe(
-        await query,
-        ({ error, data }): Either<ErrorType, readonly ReturnType[]> =>
-          error !== null
-            ? Eleft(onRequestError(error))
-            : data === null
-            ? Eleft(onNoDataError())
-            : pipe(
-                sequenceArray(pipe(data, map(validation.decode))),
-                mapLeft(onValidationError)
-              )
-      );
+  onValidationError: (errors: t.Errors) => ErrorType;
 };
 
-export const supabaseRequestListWithValidation = <ValidationType extends Mixed>(
-  validation: ValidationType
-): (<SupabaseTable extends string, ErrorType = unknown>(
-  table: SupabaseTable,
-  execute: (
-    query: SupabaseQueryBuilder<TypeOf<ValidationType>>
-  ) => PostgrestFilterBuilder<TypeOf<ValidationType>>,
-  onError: OnErrorRequest<ErrorType>
-) => (
-  source: SupabaseClient
-) => TaskEither<ErrorType, readonly TypeOf<ValidationType>[]>) => {
-  type ReturnType = TypeOf<typeof validation>;
-  return <SupabaseTable extends string, ErrorType = unknown>(
-      table: SupabaseTable,
+/** All possible errors when peforming a request using `requestSingleWithValidation` from `supabase-ts`. */
+export type OnErrorSingleRequest<ErrorType = unknown> =
+  OnErrorListRequest<ErrorType> & {
+    onZeroData: () => ErrorType;
+  };
+
+/** Table schema validation when making a request using `supabase-ts`. */
+export type TableValidated<TableSchema extends t.Props> = {
+  name: string;
+  schema: t.TypeC<TableSchema>;
+};
+
+class SupabaseClientIO<ClientErrorType = unknown> {
+  supabaseClient: SupabaseClient;
+
+  constructor(supabaseClient: SupabaseClient) {
+    this.supabaseClient = supabaseClient;
+  }
+
+  protected requestWithValidation = <TableSchema extends t.Props>(
+    tableValidated: TableValidated<TableSchema>
+  ) => {
+    // Extract schema validation type
+    const schema = tableValidated.schema;
+    type TableType = t.TypeOf<typeof schema>;
+
+    return <ErrorType = ClientErrorType>(
+        query: PostgrestFilterBuilder<TableType>,
+        {
+          onNoDataError,
+          onRequestError,
+          onValidationError,
+        }: OnErrorListRequest<ErrorType>
+      ): TaskEither<ErrorType, readonly TableType[]> =>
+      async (): Promise<E.Either<ErrorType, readonly TableType[]>> =>
+        pipe(
+          await query,
+          ({ error, data }): E.Either<ErrorType, readonly TableType[]> =>
+            error !== null
+              ? E.left(onRequestError(error))
+              : data === null
+              ? E.left(onNoDataError())
+              : pipe(
+                  E.sequenceArray(pipe(data, map(schema.decode))),
+                  E.mapLeft(onValidationError)
+                )
+        );
+  };
+
+  /**
+   * Perform a request to supabase and return a list of values.
+   *
+   * @param tableValidated name of the table and [`io-ts`](https://github.com/gcanti/io-ts) validated schema
+   * @returns Either the result of the request to supabase or a user-defined error (no exception!)
+   */
+  requestListWithValidation = <TableSchema extends t.Props>(
+    tableValidated: TableValidated<TableSchema>
+  ) => {
+    // Extract schema validation type
+    const schema = tableValidated.schema;
+    const table = tableValidated.name;
+    type TableType = t.TypeOf<typeof schema>;
+
+    return <ErrorType = ClientErrorType>(
       execute: (
-        query: SupabaseQueryBuilder<ReturnType>
-      ) => PostgrestFilterBuilder<ReturnType>,
-      onError: OnErrorRequest<ErrorType>
-    ) =>
-    (source: SupabaseClient): TaskEither<ErrorType, readonly ReturnType[]> =>
-      _supabaseRequestWithValidation<ReturnType>(validation)<ErrorType>(
-        execute(source.from<ReturnType>(table)),
+        query: SupabaseQueryBuilder<TableType>
+      ) => PostgrestFilterBuilder<TableType>,
+      onError: OnErrorListRequest<ErrorType>
+    ): TaskEither<ErrorType, readonly TableType[]> =>
+      this.requestWithValidation<TableSchema>(tableValidated)<ErrorType>(
+        execute(this.supabaseClient.from<TableType>(table)),
         onError
       );
-};
+  };
 
-export const supabaseRequestSingleWithValidation = <
-  ValidationType extends Mixed
->(
-  validation: ValidationType
-): (<SupabaseTable extends string, ErrorType = unknown>(
-  table: SupabaseTable,
-  execute: (
-    query: SupabaseQueryBuilder<TypeOf<ValidationType>>
-  ) => PostgrestFilterBuilder<TypeOf<ValidationType>>,
-  {
-    onZeroData,
-    ...onError
-  }: OnErrorRequest<ErrorType> & { onZeroData: () => ErrorType }
-) => (
-  source: SupabaseClient
-) => TaskEither<ErrorType, TypeOf<ValidationType>>) => {
-  type ReturnType = TypeOf<typeof validation>;
-  return <SupabaseTable extends string, ErrorType = unknown>(
-      table: SupabaseTable,
+  /**
+   * Perform a request to supabase and return a single value.
+   *
+   * @param tableValidated name of the table and [`io-ts`](https://github.com/gcanti/io-ts) validated schema
+   * @returns Either the result of the request to supabase or a user-defined error (no exception!)
+   */
+  requestSingleWithValidation = <TableSchema extends t.Props>(
+    tableValidated: TableValidated<TableSchema>
+  ) => {
+    // Extract schema validation type
+    const schema = tableValidated.schema;
+    const table = tableValidated.name;
+    type TableType = t.TypeOf<typeof schema>;
+
+    return <ErrorType = ClientErrorType>(
       execute: (
-        query: SupabaseQueryBuilder<ReturnType>
-      ) => PostgrestFilterBuilder<ReturnType>,
-      {
-        onZeroData,
-        ...onError
-      }: OnErrorRequest<ErrorType> & {
-        onZeroData: () => ErrorType;
-      }
-    ) =>
-    (source: SupabaseClient): TaskEither<ErrorType, ReturnType> =>
+        query: SupabaseQueryBuilder<TableType>
+      ) => PostgrestFilterBuilder<TableType>,
+      { onZeroData, ...onError }: OnErrorSingleRequest<ErrorType>
+    ): TaskEither<ErrorType, TableType> =>
       pipe(
-        _supabaseRequestWithValidation<ReturnType>(validation)<ErrorType>(
-          execute(source.from<ReturnType>(table)).limit(1),
+        this.requestWithValidation<TableSchema>(tableValidated)<ErrorType>(
+          execute(this.supabaseClient.from<TableType>(table)).limit(1),
           onError
         ),
-        chain((dataList) =>
+        TE.chain((dataList) =>
           pipe(
             dataList,
-            ROAhead,
-            fold(
-              (): TaskEither<ErrorType, ReturnType> => TEleft(onZeroData()),
-              (data) => of(data)
+            ROA.head,
+            O.fold(
+              (): TaskEither<ErrorType, TableType> => TE.left(onZeroData()),
+              TE.of
             )
           )
         )
       );
+  };
+}
+
+/**
+ * Builds an instance of `SupabaseClientIO` from a `SupabaseClient`.
+ *
+ * @param supabaseClient Reference to a `SupabaseClient`
+ * @returns Instance of `SupabaseClientIO` used to perform validated requests
+ */
+export const createClientIO = <ClientErrorType = unknown>(
+  supabaseClient: SupabaseClient
+) => {
+  return new SupabaseClientIO<ClientErrorType>(supabaseClient);
 };

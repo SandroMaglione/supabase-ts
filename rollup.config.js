@@ -11,12 +11,14 @@ export default {
       format: 'cjs',
       compact: true,
       exports: 'named',
+      sourcemap: true,
     },
     {
       file: 'dist/main.esm.js',
       format: 'esm',
       compact: true,
       exports: 'named',
+      sourcemap: true,
     },
   ],
   plugins: [
