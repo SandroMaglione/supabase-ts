@@ -1,8 +1,14 @@
 {
   "name": "supabase-ts",
-  "version": "0.1.4",
+  "author": "Sandro Maglione <lass.maglio@gmail.com> (https://www.sandromaglione.com/)",
+  "description": "Make request to supabase using the power of fp-ts, io-ts, and parsing.",
+  "homepage": "https://github.com/SandroMaglione/supabase-ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SandroMaglione/supabase-ts"
+  },
+  "version": "0.1.5",
   "license": "MIT",
-  "author": "Sandro Maglione",
   "main": "dist/main.js",
   "module": "dist/main.esm.js",
   "typings": "dist/main.d.ts",
@@ -20,11 +26,13 @@
   "keywords": [
     "fp-ts",
     "supabase",
-    "functional-programming"
+    "functional-programming",
+    "functional typescript"
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && rollup -c && tsc -p tsconfig.json"
+    "build": "npm run clean && rollup -c && tsc -p tsconfig.json",
+    "upload": "npm run build && npm publish"
   },
   "peerDependencies": {
     "@supabase/supabase-js": "1.x.x",

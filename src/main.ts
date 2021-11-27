@@ -24,12 +24,18 @@ export type OnErrorSingleRequest<ErrorType = unknown> =
   };
 
 /** Table schema validation when making a request using `supabase-ts`. */
-export type TableValidated<TableSchema extends t.Props> = {
-  name: string;
+export type TableValidated<
+  SupabaseTable extends string,
+  TableSchema extends t.Props
+> = {
+  name: SupabaseTable;
   schema: t.TypeC<TableSchema>;
 };
 
-class SupabaseClientIO<ClientErrorType = unknown> {
+class SupabaseClientIO<
+  SupabaseTable extends string,
+  ClientErrorType = unknown
+> {
   supabaseClient: SupabaseClient;
 
   constructor(supabaseClient: SupabaseClient) {
@@ -37,7 +43,7 @@ class SupabaseClientIO<ClientErrorType = unknown> {
   }
 
   protected requestWithValidation = <TableSchema extends t.Props>(
-    tableValidated: TableValidated<TableSchema>
+    tableValidated: TableValidated<SupabaseTable, TableSchema>
   ) => {
     // Extract schema validation type
     const schema = tableValidated.schema;
@@ -73,7 +79,7 @@ class SupabaseClientIO<ClientErrorType = unknown> {
    * @returns Either the result of the request to supabase or a user-defined error (no exception!)
    */
   requestListWithValidation = <TableSchema extends t.Props>(
-    tableValidated: TableValidated<TableSchema>
+    tableValidated: TableValidated<SupabaseTable, TableSchema>
   ) => {
     // Extract schema validation type
     const schema = tableValidated.schema;
@@ -99,7 +105,7 @@ class SupabaseClientIO<ClientErrorType = unknown> {
    * @returns Either the result of the request to supabase or a user-defined error (no exception!)
    */
   requestSingleWithValidation = <TableSchema extends t.Props>(
-    tableValidated: TableValidated<TableSchema>
+    tableValidated: TableValidated<SupabaseTable, TableSchema>
   ) => {
     // Extract schema validation type
     const schema = tableValidated.schema;
@@ -134,11 +140,17 @@ class SupabaseClientIO<ClientErrorType = unknown> {
 /**
  * Builds an instance of `SupabaseClientIO` from a `SupabaseClient`.
  *
+ * - `SupabaseTable`: specify tables/views names allowed
+ * - `ClientErrorType`: default error type
+ *
  * @param supabaseClient Reference to a `SupabaseClient`
  * @returns Instance of `SupabaseClientIO` used to perform validated requests
  */
-export const createClientIO = <ClientErrorType = unknown>(
+export const createClientIO = <
+  SupabaseTable extends string,
+  ClientErrorType = unknown
+>(
   supabaseClient: SupabaseClient
 ) => {
-  return new SupabaseClientIO<ClientErrorType>(supabaseClient);
+  return new SupabaseClientIO<SupabaseTable, ClientErrorType>(supabaseClient);
 };
