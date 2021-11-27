@@ -2,7 +2,7 @@
   "include": ["src"],
   "exclude": [],
   "compilerOptions": {
-    "declarationDir": ".",
+    "declarationDir": "dist",
     "declaration": true,
     "module": "esnext",
     "lib": ["dom", "esnext"],
@@ -19,6 +19,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true
+    "noEmit": false
   }
 }

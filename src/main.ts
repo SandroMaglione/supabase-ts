@@ -8,7 +8,6 @@ import { pipe } from 'fp-ts/lib/function';
 import * as O from 'fp-ts/Option';
 import * as ROA from 'fp-ts/ReadonlyArray';
 import * as TE from 'fp-ts/TaskEither';
-import { TaskEither } from 'fp-ts/TaskEither';
 import * as t from 'io-ts';
 
 /** All possible errors when peforming a request using `requestListWithValidation` from `supabase-ts`. */
@@ -51,7 +50,7 @@ class SupabaseClientIO<ClientErrorType = unknown> {
           onRequestError,
           onValidationError,
         }: OnErrorListRequest<ErrorType>
-      ): TaskEither<ErrorType, readonly TableType[]> =>
+      ): TE.TaskEither<ErrorType, readonly TableType[]> =>
       async (): Promise<E.Either<ErrorType, readonly TableType[]>> =>
         pipe(
           await query,
@@ -86,7 +85,7 @@ class SupabaseClientIO<ClientErrorType = unknown> {
         query: SupabaseQueryBuilder<TableType>
       ) => PostgrestFilterBuilder<TableType>,
       onError: OnErrorListRequest<ErrorType>
-    ): TaskEither<ErrorType, readonly TableType[]> =>
+    ): TE.TaskEither<ErrorType, readonly TableType[]> =>
       this.requestWithValidation<TableSchema>(tableValidated)<ErrorType>(
         execute(this.supabaseClient.from<TableType>(table)),
         onError
@@ -112,7 +111,7 @@ class SupabaseClientIO<ClientErrorType = unknown> {
         query: SupabaseQueryBuilder<TableType>
       ) => PostgrestFilterBuilder<TableType>,
       { onZeroData, ...onError }: OnErrorSingleRequest<ErrorType>
-    ): TaskEither<ErrorType, TableType> =>
+    ): TE.TaskEither<ErrorType, TableType> =>
       pipe(
         this.requestWithValidation<TableSchema>(tableValidated)<ErrorType>(
           execute(this.supabaseClient.from<TableType>(table)).limit(1),
@@ -123,7 +122,7 @@ class SupabaseClientIO<ClientErrorType = unknown> {
             dataList,
             ROA.head,
             O.fold(
-              (): TaskEither<ErrorType, TableType> => TE.left(onZeroData()),
+              (): TE.TaskEither<ErrorType, TableType> => TE.left(onZeroData()),
               TE.of
             )
           )
