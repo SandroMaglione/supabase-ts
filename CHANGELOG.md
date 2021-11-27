@@ -1,3 +1,13 @@
+## `v0.2.1` - 27 November 2021
+
+- Updated module bundler setup (Rollup)
+- Updated the API
+  - Use `createClientIO` to extend a `SupabaseClient` with validated request
+    - `requestListWithValidation`
+    - `requestSingleWithValidation`
+  - Type-safe table names
+  - Type inference for return types based on `io-ts` schema
+
 ## `v0.1.3` - 24 September 2021
 
 - Moved library to [`tsdx`](https://tsdx.io/)
